@@ -1,6 +1,7 @@
 import cv2 as cv
 import imutils
 import numpy as np
+import pytesseract
 
 
 class detect_using_haar:
@@ -9,7 +10,7 @@ class detect_using_haar:
             cv.data.haarcascades + 'haarcascade_russian_plate_number.xml')
 
     def fromVideo(self):
-        cap = cv.VideoCapture('MindlessPoisedDunlin-mobile.mp4')
+        cap = cv.VideoCapture('Video Analytics based License Plate Recognition - Entry_ Exit.mp4')
 
         while (cap.isOpened()):
             check, frame = cap.read()
@@ -22,16 +23,16 @@ class detect_using_haar:
             for x, y, w, h in license:
                 cv.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 3)
 
-            cv.imshow("Image", frame)
-            
+            cv.imshow("Image",frame)
+
             if cv.waitKey(25) & 0xFF == ord('q'):
                 break
 
         cap.release()
-    
+
 
     def fromImage(self):
-        image = cv.imread('car11.jpg')
+        image = cv.imread('car6.jpg')
         gray_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
         filter_ = cv.bilateralFilter(gray_image, 20, 17, 17)
@@ -48,18 +49,6 @@ class detect_using_haar:
         cv.waitKey(0)
         cv.destroyAllWindows()
 
-
-# gray_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-# filter_ = cv.bilateralFilter(gray_image, 20, 17, 17)
-# edge = cv.Canny(filter_, 200, 255)
-# license = license_cascade.detectMultiScale(filter_, 1.1, 10)
-# print(license)
-
-# for x, y, w, h in license:
-#     cv.rectangle(image, (x, y), (x+w, y+h), (255, 0, 0), 3)
-
-
-# cv.imshow("Image", image)
 
 
 class detect_using_imageProc:
@@ -88,20 +77,25 @@ class detect_using_imageProc:
         mask = np.zeros(gray_image.shape, np.uint8)
         new_image = cv.drawContours(mask, [location], 0, (255, 0, 0), -1)
         new_image = cv.bitwise_and(image, image, mask=mask)
-        output = image.copy()
 
+        (x, y) = np.where(mask==255)
+        (x1, y1) = (np.min(x), np.min(y))
+        (x2, y2) = (np.max(x), np.max(y))
+        cropped_image = gray_image[x1:x2+1, y1:y2+1]
+
+        cv.imwrite('licenseplate.jpg', cropped_image)
+
+        image_to_read = cv.imread('licenseplate.jpg')
+
+        image_text = pytesseract.image_to_string(image_to_read)
+
+        print(image_text)
+
+        output = image.copy()
         cv.drawContours(output, cnts, -1, (240, 0, 159), 3)
-        # cv.imshow("Gray", gray_image)
-        # cv.imshow("Edge", roi)
-        # cv.imshow("Filtered/Blurred", filter_)
-        # cv.imshow("Contours", output)
         cv.imshow("Detected", new_image)
         cv.waitKey(0)
 
-        # for c in cnts:
-        # 	cv.drawContours(output, [c], -1, (240, 0, 159), 3)
-        # 	cv.imshow("Contours", output)
-        # 	cv.waitKey(0)
 
 
 detect_car = detect_using_haar()
